@@ -1,0 +1,101 @@
+{
+  "dataset_name": "RDD2022_Custom",
+  "random_seed": 42,
+  "target_classes": {
+    "D40": 0
+  },
+  "class_names": {
+    "0": "Pothole"
+  },
+  "near_duplicate_filter": {
+    "enabled": true,
+    "hash_size": 8,
+    "max_hamming_distance": 3,
+    "window_size": 15,
+    "excluded_count": 34
+  },
+  "background_cap_ratio": 0.1,
+  "splits_ratio": {
+    "train": 0.7,
+    "tune": 0.15,
+    "val": 0.15
+  },
+  "raw_classes_found_in_xmls": {
+    "D40": 60,
+    "D00": 12
+  },
+  "counts": {
+    "overall": {
+      "num_images": 18,
+      "num_positive_images": 17,
+      "num_background_images": 1,
+      "total_boxes": 27,
+      "boxes_by_class": {
+        "D40": 27
+      },
+      "boxes_by_size": {
+        "small": 4,
+        "medium": 10,
+        "large": 13
+      },
+      "boxes_per_image": {
+        "max": 3,
+        "avg": 1.5
+      }
+    },
+    "train": {
+      "num_images": 12,
+      "num_positive_images": 12,
+      "num_background_images": 0,
+      "total_boxes": 16,
+      "boxes_by_class": {
+        "D40": 16
+      },
+      "boxes_by_size": {
+        "small": 4,
+        "medium": 4,
+        "large": 8
+      },
+      "boxes_per_image": {
+        "max": 3,
+        "avg": 1.33
+      }
+    },
+    "tune": {
+      "num_images": 2,
+      "num_positive_images": 2,
+      "num_background_images": 0,
+      "total_boxes": 6,
+      "boxes_by_class": {
+        "D40": 6
+      },
+      "boxes_by_size": {
+        "small": 0,
+        "medium": 4,
+        "large": 2
+      },
+      "boxes_per_image": {
+        "max": 3,
+        "avg": 3.0
+      }
+    },
+    "val": {
+      "num_images": 4,
+      "num_positive_images": 3,
+      "num_background_images": 1,
+      "total_boxes": 5,
+      "boxes_by_class": {
+        "D40": 5
+      },
+      "boxes_by_size": {
+        "small": 0,
+        "medium": 2,
+        "large": 3
+      },
+      "boxes_per_image": {
+        "max": 3,
+        "avg": 1.25
+      }
+    }
+  }
+}

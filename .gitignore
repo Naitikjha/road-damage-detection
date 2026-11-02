@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest / Caches
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Data and Checkpoints (Heavy binary files)
+data/raw/
+*.tar.gz
+*.zip
+checkpoints/
+*.pt
+*.pth
+
+# OS generated files
+.DS_Store
+Thumbs.db

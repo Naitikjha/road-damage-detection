@@ -1,0 +1,27 @@
+# Configuration for Road Damage Detection - Pothole Only (Default)
+
+dataset:
+  raw_dir: "data/raw/RDD2022"
+  processed_dir: "data/processed/pothole_only"
+  countries: ["Japan", "India"]
+  classes:
+    D40: 0 # Pothole
+  class_names:
+    0: "Pothole"
+  background_ratio_cap: 0.10 # Max 10% background-only images relative to positive images
+  splits:
+    train: 0.70
+    tune: 0.15
+    val: 0.15
+  random_seed: 42
+  phash:
+    enabled: true
+    hash_size: 8
+    max_hamming_distance: 3 # Distance <= 3 indicates near-duplicate consecutive frame
+    window_size: 15 # Check against recent sequential dashcam frames in the sequence
+
+model:
+  name: "ResPotholeNet"
+  input_size: 512
+  stride: 4
+  num_classes: 1

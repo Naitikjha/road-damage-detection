@@ -1,0 +1,33 @@
+# Configuration for Road Damage Detection - All 4 RDD2022 Damage Classes
+
+dataset:
+  raw_dir: "data/raw/RDD2022"
+  processed_dir: "data/processed/all_classes"
+  countries: ["Japan", "India"]
+  classes:
+    D00: 0 # Longitudinal Crack
+    D10: 1 # Transverse Crack
+    D20: 2 # Alligator Crack
+    D40: 3 # Pothole
+  class_names:
+    0: "Longitudinal Crack"
+    1: "Transverse Crack"
+    2: "Alligator Crack"
+    3: "Pothole"
+  background_ratio_cap: 0.10
+  splits:
+    train: 0.70
+    tune: 0.15
+    val: 0.15
+  random_seed: 42
+  phash:
+    enabled: true
+    hash_size: 8
+    max_hamming_distance: 3
+    window_size: 15
+
+model:
+  name: "ResPotholeNet"
+  input_size: 512
+  stride: 4
+  num_classes: 4

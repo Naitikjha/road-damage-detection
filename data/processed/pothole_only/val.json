@@ -1,0 +1,114 @@
+[
+  {
+    "image_id": "India_000001",
+    "file_name": "India_000001.jpg",
+    "rel_path": "data/raw/RDD2022/India/train/images/India_000001.jpg",
+    "abs_path": "D:/NAITIK/COLLEGE/ROAD-DAMAGE/data/raw/RDD2022/India/train/images/India_000001.jpg",
+    "country": "India",
+    "width": 600,
+    "height": 600,
+    "annotations": [
+      {
+        "class_id": 0,
+        "class_name": "D40",
+        "bbox": [
+          157.0,
+          205.0,
+          287.0,
+          315.0
+        ],
+        "area": 14300.0,
+        "width": 130.0,
+        "height": 110.0
+      }
+    ],
+    "num_boxes": 1
+  },
+  {
+    "image_id": "Japan_000011",
+    "file_name": "Japan_000011.jpg",
+    "rel_path": "data/raw/RDD2022/Japan/train/images/Japan_000011.jpg",
+    "abs_path": "D:/NAITIK/COLLEGE/ROAD-DAMAGE/data/raw/RDD2022/Japan/train/images/Japan_000011.jpg",
+    "country": "Japan",
+    "width": 600,
+    "height": 600,
+    "annotations": [
+      {
+        "class_id": 0,
+        "class_name": "D40",
+        "bbox": [
+          227.0,
+          255.0,
+          357.0,
+          365.0
+        ],
+        "area": 14300.0,
+        "width": 130.0,
+        "height": 110.0
+      }
+    ],
+    "num_boxes": 1
+  },
+  {
+    "image_id": "India_000007",
+    "file_name": "India_000007.jpg",
+    "rel_path": "data/raw/RDD2022/India/train/images/India_000007.jpg",
+    "abs_path": "D:/NAITIK/COLLEGE/ROAD-DAMAGE/data/raw/RDD2022/India/train/images/India_000007.jpg",
+    "country": "India",
+    "width": 600,
+    "height": 600,
+    "annotations": [
+      {
+        "class_id": 0,
+        "class_name": "D40",
+        "bbox": [
+          100.0,
+          250.0,
+          180.0,
+          320.0
+        ],
+        "area": 5600.0,
+        "width": 80.0,
+        "height": 70.0
+      },
+      {
+        "class_id": 0,
+        "class_name": "D40",
+        "bbox": [
+          220.0,
+          300.0,
+          340.0,
+          420.0
+        ],
+        "area": 14400.0,
+        "width": 120.0,
+        "height": 120.0
+      },
+      {
+        "class_id": 0,
+        "class_name": "D40",
+        "bbox": [
+          380.0,
+          180.0,
+          460.0,
+          250.0
+        ],
+        "area": 5600.0,
+        "width": 80.0,
+        "height": 70.0
+      }
+    ],
+    "num_boxes": 3
+  },
+  {
+    "image_id": "India_000015",
+    "file_name": "India_000015.jpg",
+    "rel_path": "data/raw/RDD2022/India/train/images/India_000015.jpg",
+    "abs_path": "D:/NAITIK/COLLEGE/ROAD-DAMAGE/data/raw/RDD2022/India/train/images/India_000015.jpg",
+    "country": "India",
+    "width": 600,
+    "height": 600,
+    "annotations": [],
+    "num_boxes": 0
+  }
+]
