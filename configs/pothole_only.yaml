@@ -13,6 +13,7 @@ dataset:
     train: 0.70
     tune: 0.15
     val: 0.15
+    block_size: 50 # Consecutive frame block size for block-based split
   random_seed: 42
   phash:
     enabled: true

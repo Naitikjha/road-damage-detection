@@ -45,9 +45,11 @@ graph TD
 
 This project utilizes the **Road Damage Dataset 2022 (RDD2022)** released by Sekilab.
 
-* **Reference Citation**:
+* **Reference Citations**:
+  > Arya, D., Maeda, H., Ghosh, S. K., Toshniwal, D., Mraz, A., Kashiyama, T., & Sekimoto, Y. (2022). *Crowdsensing-based Road Damage Detection: An Extended Dataset and Transferability Analysis*. arXiv:2208.14444.
+  > 
   > Maeda, H., Sekimoto, Y., Seto, T., Kashiyama, T., & Omata, H. (2018). *Road Damage Detection Using Deep Neural Networks with Smartphone Images*. Computer-Aided Civil and Infrastructure Engineering.
-* **RDD2022 Public Test Set Notice**: The official RDD2022 competition only provides public ground truth annotations for the **training sets** of each country. The test sets do not contain public labels. Consequently, this repository establishes a rigorous local train/tune/val partition with near-duplicate separation to ensure valid, reproducible evaluation.
+* **RDD2022 Public Test Set Notice**: The official RDD2022 competition only provides public ground truth annotations for the **training sets** of each country. The test sets do not contain public labels. Consequently, this repository establishes a rigorous local train/tune/val partition with near-duplicate separation and block-based grouping (50 frames per block) to ensure valid, reproducible evaluation.
 * **Target Classes**:
   * `D40`: **Pothole** (Default single-class focus for road safety)
   * `D00`: Longitudinal Crack (Optional via `configs/all_classes.yaml`)

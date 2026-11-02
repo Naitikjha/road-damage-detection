@@ -15,8 +15,10 @@ env/
 venv/
 ENV/
 
-# Data and Checkpoints (Heavy binary files)
+# Data and Checkpoints (Heavy binary files & generated run outputs)
 data/raw/
+data/processed/
+outputs/
 *.tar.gz
 *.zip
 checkpoints/

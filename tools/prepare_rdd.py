@@ -240,12 +240,11 @@ def prepare_dataset(config_path: str):
             except Exception as e:
                 pass
 
-        rel_path = os.path.relpath(img_path, os.getcwd())
+        rel_path = os.path.relpath(img_path, os.getcwd()).replace("\\", "/")
         record = {
             "image_id": Path(img_path).stem,
             "file_name": Path(img_path).name,
-            "rel_path": rel_path.replace("\\", "/"),
-            "abs_path": str(Path(img_path).resolve()).replace("\\", "/"),
+            "rel_path": rel_path,
             "country": country,
             "width": w,
             "height": h,
@@ -263,26 +262,60 @@ def prepare_dataset(config_path: str):
 
     max_bg_allowed = int(len(positive_records) * bg_ratio_cap)
     random.shuffle(background_records)
-    selected_bg = background_records[:max_bg_allowed]
+    selected_bg = set(id(r) for r in background_records[:max_bg_allowed])
 
-    final_pool = positive_records + selected_bg
-    random.shuffle(final_pool)
+    # Keep temporal order for block assignment
+    final_pool = [r for r in parsed_records if r["num_boxes"] > 0 or id(r) in selected_bg]
 
     print(f"[*] Positive images with target damage: {len(positive_records)}")
     print(f"[*] Available background-only images: {len(background_records)}")
     print(f"[*] Selected background images (capped at {bg_ratio_cap*100:.1f}%): {len(selected_bg)}")
     print(f"[*] Total images in dataset pool: {len(final_pool)}")
 
-    # 3. Create reproducible train / tune / val splits
-    n_total = len(final_pool)
-    n_train = int(n_total * splits["train"])
-    n_tune = int(n_total * splits["tune"])
-    # Remainder goes to validation
-    n_val = n_total - n_train - n_tune
+    # 3. Block-based split (group consecutive dashcam frames into blocks of block_size)
+    target_block_size = int(splits.get("block_size", 50))
+    # If pool is small (e.g. test runs), adapt block size so multiple blocks exist
+    effective_block_size = target_block_size if len(final_pool) >= target_block_size * 3 else max(1, len(final_pool) // 6)
 
-    train_data = final_pool[:n_train]
-    tune_data = final_pool[n_train : n_train + n_tune]
-    val_data = final_pool[n_train + n_tune :]
+    # Group consecutive frames per country into blocks
+    blocks: Dict[str, List[Dict[str, Any]]] = {}
+    country_groups: Dict[str, List[Dict[str, Any]]] = {}
+    for r in final_pool:
+        country_groups.setdefault(r["country"], []).append(r)
+
+    for country_name, records_in_country in country_groups.items():
+        for idx, rec in enumerate(records_in_country):
+            b_num = idx // effective_block_size
+            b_id = f"{country_name}_blk_{b_num:04d}"
+            rec["block_id"] = b_id
+            blocks.setdefault(b_id, []).append(rec)
+
+    block_id_list = list(blocks.keys())
+    random.shuffle(block_id_list)
+
+    n_blocks = len(block_id_list)
+    n_train_b = max(1, int(n_blocks * splits["train"]))
+    n_tune_b = max(1, int(n_blocks * splits["tune"])) if n_blocks >= 3 else 0
+    n_val_b = n_blocks - n_train_b - n_tune_b
+    if n_val_b <= 0 and n_blocks >= 3:
+        n_train_b -= 1
+        n_val_b = 1
+
+    train_blocks = set(block_id_list[:n_train_b])
+    tune_blocks = set(block_id_list[n_train_b : n_train_b + n_tune_b])
+    val_blocks = set(block_id_list[n_train_b + n_tune_b :])
+
+    # Strict assertion that no block appears in more than one split
+    assert len(train_blocks.intersection(tune_blocks)) == 0, "Leakage: Block found in both train and tune splits!"
+    assert len(train_blocks.intersection(val_blocks)) == 0, "Leakage: Block found in both train and val splits!"
+    assert len(tune_blocks.intersection(val_blocks)) == 0, "Leakage: Block found in both tune and val splits!"
+
+    train_data = [r for b in train_blocks for r in blocks[b]]
+    tune_data = [r for b in tune_blocks for r in blocks[b]]
+    val_data = [r for b in val_blocks for r in blocks[b]]
+
+    print(f"[*] Block-based partitioning complete (block size: {effective_block_size} consecutive frames)")
+    print(f"[*] Total blocks: {n_blocks} -> Train: {len(train_blocks)} blocks | Tune: {len(tune_blocks)} blocks | Val: {len(val_blocks)} blocks")
 
     # 4. Compute statistics
     def get_stats(records: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -325,6 +358,13 @@ def prepare_dataset(config_path: str):
         },
         "background_cap_ratio": bg_ratio_cap,
         "splits_ratio": splits,
+        "block_partitioning": {
+            "block_size": effective_block_size,
+            "total_blocks": n_blocks,
+            "train_blocks": len(train_blocks),
+            "tune_blocks": len(tune_blocks),
+            "val_blocks": len(val_blocks),
+        },
         "raw_classes_found_in_xmls": raw_class_totals,
         "counts": {
             "overall": stats_overall,

@@ -119,9 +119,10 @@ class RoadDamageDataset(Dataset):
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor, Dict[str, Any]]:
         record = self.records[idx]
-        img_path = record.get("abs_path")
-        if not img_path or not os.path.exists(img_path):
-            img_path = str(Path(record["rel_path"]).resolve())
+        rel_p = record["rel_path"]
+        img_path = str(Path(rel_p).resolve())
+        if not os.path.exists(img_path):
+            img_path = os.path.join(os.getcwd(), rel_p)
 
         img_bgr = cv2.imread(img_path)
         if img_bgr is None:

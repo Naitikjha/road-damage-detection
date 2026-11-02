@@ -122,3 +122,38 @@ def test_dataset_and_dataloader():
     assert len(targets) == 2
     assert isinstance(metas, list)
     assert len(metas) == 2
+
+
+def test_block_based_split_and_no_abs_path():
+    """Verify that processed JSON manifests use rel_path only and have zero block leakage across splits."""
+    import json
+    train_p = "data/processed/pothole_only/train.json"
+    tune_p = "data/processed/pothole_only/tune.json"
+    val_p = "data/processed/pothole_only/val.json"
+
+    if not (os.path.exists(train_p) and os.path.exists(tune_p) and os.path.exists(val_p)):
+        pytest.skip("Processed JSONs not yet generated. Run prepare_rdd.py first.")
+
+    with open(train_p, "r", encoding="utf-8") as f:
+        train_data = json.load(f)
+    with open(tune_p, "r", encoding="utf-8") as f:
+        tune_data = json.load(f)
+    with open(val_p, "r", encoding="utf-8") as f:
+        val_data = json.load(f)
+
+    # 1. Verify NO abs_path in any record
+    for split_name, split_list in [("train", train_data), ("tune", tune_data), ("val", val_data)]:
+        for rec in split_list:
+            assert "abs_path" not in rec, f"Forbidden abs_path found in {split_name} record {rec.get('image_id')}"
+            assert "rel_path" in rec, f"Missing rel_path in {split_name} record {rec.get('image_id')}"
+            assert not os.path.isabs(rec["rel_path"]), f"rel_path must not be absolute: {rec['rel_path']}"
+
+    # 2. Verify block separation (zero overlap of block_id between any splits)
+    train_blocks = set(r["block_id"] for r in train_data if "block_id" in r)
+    tune_blocks = set(r["block_id"] for r in tune_data if "block_id" in r)
+    val_blocks = set(r["block_id"] for r in val_data if "block_id" in r)
+
+    assert len(train_blocks.intersection(tune_blocks)) == 0, "Block leakage found between train and tune!"
+    assert len(train_blocks.intersection(val_blocks)) == 0, "Block leakage found between train and val!"
+    assert len(tune_blocks.intersection(val_blocks)) == 0, "Block leakage found between tune and val!"
+

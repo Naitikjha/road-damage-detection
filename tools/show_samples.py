@@ -57,10 +57,10 @@ def draw_box(img: np.ndarray, bbox: List[float], label: str, color: Tuple[int, i
 
 def render_sample(record: Dict[str, Any], target_size: Tuple[int, int] = (400, 400)) -> np.ndarray:
     """Read an image record, draw its annotations, and resize for grid display."""
-    img_path = record.get("abs_path") or record.get("rel_path")
+    rel_p = record.get("rel_path", "")
+    img_path = str(Path(rel_p).resolve())
     if not os.path.exists(img_path):
-        # Try finding it relative to current working directory
-        img_path = str(Path(record["rel_path"]).resolve())
+        img_path = os.path.join(os.getcwd(), rel_p)
 
     img = cv2.imread(img_path)
     if img is None:

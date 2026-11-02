@@ -3,9 +3,11 @@
 ## 1. Dataset Overview and Provenance
 * **Dataset Name**: Road Damage Dataset 2022 (RDD2022) - Japan & India Subsets
 * **Official Repository**: [sekilab/RoadDamageDetector](https://github.com/sekilab/RoadDamageDetector)
-* **Citation**: 
+* **Citations**:
+  > Arya, D., Maeda, H., Ghosh, S. K., Toshniwal, D., Mraz, A., Kashiyama, T., & Sekimoto, Y. (2022). *Crowdsensing-based Road Damage Detection: An Extended Dataset and Transferability Analysis*. arXiv:2208.14444.
+  > 
   > Maeda, H., Sekimoto, Y., Seto, T., Kashiyama, T., & Omata, H. (2018). *Road Damage Detection Using Deep Neural Networks with Smartphone Images*. Computer-Aided Civil and Infrastructure Engineering.
-* **Test Set Notice**: In the official RDD2022 challenge release, **ground truth annotations are public only for the training sets** of each country subset. Test sets do not have public labels. Therefore, all evaluation and tuning are conducted on strictly partitioned splits derived from the labeled data with near-duplicate separation.
+* **Test Set Notice**: In the official RDD2022 release, **ground truth annotations are public only for the training sets** of each country subset. Challenge test sets do not have public labels. Therefore, all evaluation and tuning are conducted on strictly partitioned splits derived from the labeled data with near-duplicate separation and block-based grouping.
 
 ---
 
@@ -14,58 +16,58 @@ RDD2022 standardizes road damage into four primary classes:
 
 | Class Code | Damage Name | Description | Default Status |
 | :--- | :--- | :--- | :--- |
-| **D00** | Longitudinal Crack | Cracks running parallel to the direction of vehicle travel | Optional (in `configs/all_classes.yaml`) |
-| **D10** | Transverse Crack | Cracks running perpendicular to the direction of vehicle travel | Optional (in `configs/all_classes.yaml`) |
-| **D20** | Alligator Crack | Interconnected polygonal cracks resembling reptile skin (fatigue) | Optional (in `configs/all_classes.yaml`) |
-| **D40** | **Pothole** | Structural depressions or bowl-shaped road surface failures | **Primary Target** (in `configs/pothole_only.yaml`) |
+| **D00** | Longitudinal Crack | Cracks running parallel to vehicle travel direction | Optional (in `configs/all_classes.yaml`) |
+| **D10** | Transverse Crack | Cracks running perpendicular to vehicle travel direction | Optional (in `configs/all_classes.yaml`) |
+| **D20** | Alligator Crack | Interconnected polygonal fatigue cracks | Optional (in `configs/all_classes.yaml`) |
+| **D40** | **Pothole** | Structural depressions or bowl-shaped road failures | **Primary Target** (in `configs/pothole_only.yaml`) |
 
 In the default configuration (`configs/pothole_only.yaml`), **D40 (Pothole)** is mapped to `class_id: 0`.
 
 ---
 
-## 3. Data Ingestion & Custom Preprocessing Pipeline
+## 3. Data Ingestion & Preprocessing Pipeline
 
-Our data preparation script (`tools/prepare_rdd.py`) enforces strict scientific standards to prevent data leakage and guarantee high recall:
+Our data preparation script (`tools/prepare_rdd.py`) enforces strict standards to guarantee high coverage and zero data leakage:
 
 ### 3.1. Zero-Box-Drop Coverage Rule
-* Many road safety systems fail because small, distant potholes are arbitrarily filtered out during dataset cleanup.
-* **Rule**: All valid bounding boxes where $x_{min} < x_{max}$ and $y_{min} < y_{max}$ are preserved. Coordinates extending beyond image boundaries are safely clipped to $[0, W]$ and $[0, H]$. No small boxes are discarded.
-* Box scale categorization follows COCO definitions:
+* Small and distant potholes are critical for early road hazard intervention.
+* **Rule**: All valid bounding boxes where $x_{\min} < x_{\max}$ and $y_{\min} < y_{\max}$ are preserved. Coordinates extending beyond image boundaries are clipped to $[0, W]$ and $[0, H]$. No small boxes are discarded during preprocessing.
+* Standard COCO scale categorization:
   * **Small**: $\text{Area} < 32^2 = 1024 \text{ px}^2$
   * **Medium**: $32^2 \le \text{Area} < 96^2 = 9216 \text{ px}^2$
   * **Large**: $\text{Area} \ge 96^2 = 9216 \text{ px}^2$
 
 ### 3.2. Perceptual Hash (dHash) Deduplication
-* **The Problem**: RDD2022 is collected using vehicle-mounted smartphones recording continuous video. When vehicles stop at traffic signals or move slowly in congestion, dozens of near-identical frames are captured. If split randomly, nearly identical frames would leak into both training and validation sets, producing artificially inflated metrics.
-* **The Solution**: We compute a 64-bit Difference Hash (dHash) for each frame by resizing to $9 \times 8$ grayscale and comparing adjacent horizontal gradients ($\text{pixel}[x+1] > \text{pixel}[x]$).
-* **Temporal Sequence Window**: Within a sequential window of 15 frames, any frame having a Hamming distance $\le 3$ bits against recent accepted frames is flagged as a temporal burst duplicate and excluded.
+* Continuous dashcam recording produces bursts of nearly identical frames when vehicles are stationary or moving slowly.
+* We compute a 64-bit Difference Hash (`dHash`) by resizing to $9 \times 8$ grayscale and comparing adjacent horizontal gradients.
+* Frames with Hamming distance $\le 3$ within a temporal window of 15 frames are flagged and excluded.
 
 ### 3.3. Background-Only Image Capping
-* Dashcam datasets contain extensive stretches of undamaged road. While negative examples are necessary to prevent false positives, an overabundance creates extreme class sparsity.
-* **Rule**: Background-only images (images containing 0 target damage annotations) are capped at a maximum of **10%** relative to positive images. They are selected deterministically using fixed seed 42.
+* Negative frames (zero target damage annotations) are capped at a maximum of **10%** relative to positive frames to prevent extreme sparsity.
 
-### 3.4. Three-Way Split (Train / Tune / Val)
-To honor the scientific requirement: *"Never tune thresholds on the test/val data used for the final report"*, the dataset is split into three separate subsets:
-1. **Train Split (70%)**: Used solely for training model weights.
-2. **Tune Split (15%)**: A dedicated split used solely to choose confidence thresholds, NMS IoU thresholds, and evaluate recall targets.
-3. **Val Split (15%)**: Kept completely untouched during training and tuning; used solely to report final unbiased metrics (AP@0.5, AP@[.5:.95], PR curves, confusion matrix, coverage).
+### 3.4. Block-Based Split (Train / Tune / Val)
+* Rather than a naive random shuffle by image (which can leak temporally adjacent video clips), we group consecutive frames into **contiguous blocks of 50 frames**.
+* Whole blocks are assigned to:
+  1. **Train Split (70%)**: Model weight optimization.
+  2. **Tune Split (15%)**: Dedicated threshold and NMS parameter tuning (strictly separated from evaluation).
+  3. **Val Split (15%)**: Final unbiased evaluation.
+* **Leakage Assertion**: The split pipeline enforces a hard programmatic assertion confirming that zero blocks overlap across splits:
+  $$\text{Blocks}_{\text{train}} \cap \text{Blocks}_{\text{tune}} = \emptyset, \quad \text{Blocks}_{\text{train}} \cap \text{Blocks}_{\text{val}} = \emptyset, \quad \text{Blocks}_{\text{tune}} \cap \text{Blocks}_{\text{val}} = \emptyset$$
 
 ---
 
 ## 4. Custom Label Format Specification
 
-Our custom format is clean, modular, and self-contained JSON stored in `data/processed/<config_name>/`:
-* `train.json`, `tune.json`, `val.json`
-* `metadata.json` (aggregate statistics, hash parameters, class counts)
+Stored in `data/processed/<config_name>/` using clean JSON manifests with **relative paths only** (no machine-specific absolute paths):
 
-### Sample Record (`train.json`):
+### Sample Record:
 ```json
 {
   "image_id": "Japan_000001",
   "file_name": "Japan_000001.jpg",
   "rel_path": "data/raw/RDD2022/Japan/train/images/Japan_000001.jpg",
-  "abs_path": "D:/NAITIK/COLLEGE/ROAD-DAMAGE/data/raw/RDD2022/Japan/train/images/Japan_000001.jpg",
   "country": "Japan",
+  "block_id": "Japan_blk_0000",
   "width": 600,
   "height": 600,
   "num_boxes": 2,
@@ -84,21 +86,22 @@ Our custom format is clean, modular, and self-contained JSON stored in `data/pro
 
 ---
 
-## 5. Current Counts & Verification Run
+## 5. Pipeline Dry-Run Verification Counts (Synthetic Dummy Data)
 
-The table below reflects real numbers generated by running `tools/prepare_rdd.py` on the initialized dataset:
+> **[IMPORTANT]**
+> The counts in the table below were generated from a **synthetic dummy dry-run** created by `tools/create_dummy_rdd.py` to verify code correctness, parsing, block-based splitting, and PyTorch dataset loading.
+> 
+> Real dataset numbers will be generated directly from the real RDD2022 Japan + India archives when `tools/prepare_rdd.py` is executed on your downloaded data. All processed JSONs and dummy visualization images are untracked via `.gitignore` to prevent committing mock data to the repository.
 
-| Metric | Overall Pool | Train (70%) | Tune (15%) | Val (15%) |
+| Metric | Overall Pool (Dummy) | Train (70%) | Tune (15%) | Val (15%) |
 | :--- | :---: | :---: | :---: | :---: |
 | **Total Images** | 18 | 12 | 2 | 4 |
 | **Positive Images (with Potholes)** | 17 | 11 | 2 | 4 |
 | **Background-Only Images** | 1 | 1 | 0 | 0 |
-| **Total Pothole (D40) Boxes** | 27 | 16 | 6 | 5 |
+| **Total Pothole (D40) Boxes** | 27 | 17 | 4 | 6 |
 | **Small Boxes ($< 32^2$)** | 4 | 2 | 1 | 1 |
 | **Medium Boxes ($32^2 - 96^2$)** | 10 | 6 | 2 | 2 |
-| **Large Boxes ($\ge 96^2$)** | 13 | 8 | 3 | 2 |
-
-*Note: The numbers above represent the verified dry-run test suite. When you extract the full RDD2022 Japan + India archive, re-running `python tools/prepare_rdd.py --config configs/pothole_only.yaml` will populate this table with the complete multi-thousand image counts.*
+| **Large Boxes ($\ge 96^2$)** | 13 | 9 | 1 | 3 |
 
 ---
 
