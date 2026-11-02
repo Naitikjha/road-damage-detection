@@ -6,6 +6,7 @@ An end-to-end computer vision pipeline and custom anchor-free deep neural networ
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-EE4C2C.svg)](https://pytorch.org/)
 [![Architecture](https://img.shields.io/badge/Architecture-Anchor--Free%20ResPotholeNet-brightgreen.svg)]()
 [![Dataset](https://img.shields.io/badge/Dataset-RDD2022%20(Japan%20%2B%20India)-orange.svg)](https://github.com/sekilab/RoadDamageDetector)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Naitikjha/road-damage-detection/blob/main/notebooks/colab_train.ipynb)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)]()
 
 ---
